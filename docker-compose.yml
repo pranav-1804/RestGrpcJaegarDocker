@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    container_name: mds_postgres
+    environment:
+      POSTGRES_DB: mdsdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: punekar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  rest-service:
+    build: ./rest-service
+    container_name: rest_service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: punekar
+    ports:
+      - "8080:8080"
+    restart: always
+
+  grpc-service:
+    build: ./grpc-service
+    container_name: grpc_service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: punekar
+    ports:
+      - "8090:8090"
+    restart: always
+
+volumes:
+  postgres_data:
