@@ -2,9 +2,11 @@ package com.example.grpc.interceptor;
 
 import io.grpc.*;
 import io.opentelemetry.api.trace.Span;
+import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.springframework.stereotype.Component;
 
 @Component
+@GrpcGlobalServerInterceptor
 public class DemoIdGrpcInterceptor implements ServerInterceptor {
 
     private static final Metadata.Key<String> DEMO_KEY = Metadata.Key.of("x-demo-id", Metadata.ASCII_STRING_MARSHALLER);
