@@ -5,14 +5,25 @@ echo "Starting services (will build if needed)..."
 docker compose up -d --build
 
 echo "Waiting a moment for services to initialize..."
-sleep 3
+sleep 1
+
+# wait for REST readiness
+echo "Waiting for REST service to be ready..."
+for i in $(seq 1 30); do
+  status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/orders/test || true)
+  if [ "$status" = "200" ]; then
+    echo "REST ready"
+    break
+  fi
+  sleep 1
+done
 
 # helper to query jaeger for a demo id and service
 query_jaeger() {
-  local svc="$1"; local demo="$2"; local limit=${3:-1}
-  # URL-encode demo tag value
-  curl -s "http://localhost:16686/api/traces?service=$svc&tags=demo.id%3D$demo&limit=$limit" \
-    | jq -r '.data[]?.traceID' || true
+  local svc="$1"; local demo="$2"; local limit=${3:-50}
+  # fetch recent traces for the service and filter for demo.id==demo
+  curl -s "http://localhost:16686/api/traces?service=$svc&limit=$limit" \
+    | jq -r --arg demo "$demo" '.data[]? | select(.spans[]?.tags[]? | (.key=="demo.id" and .value==$demo)) | .traceID' || true
 }
 
 DEMO_PREFIX=${1:-demo}
@@ -43,10 +54,19 @@ calls+=("delete-order-rest|rest|rest-service|DELETE|/orders/$BASE_ID")
 
 echo
 echo "Executing calls to create one trace per API..."
-declare -A trace_map
+# macOS bash doesn't support associative arrays; use a temp file to record results
+RESULTS_FILE="$(mktemp /tmp/trace_results.XXXXXX)"
+trap 'rm -f "$RESULTS_FILE"' EXIT
 
 for entry in "${calls[@]}"; do
-  IFS='|' read -r label type svc method_or_service payload <<<"$entry"
+  # split into parts robustly so REST entries can include both path and payload
+  IFS='|' read -ra parts <<<"$entry"
+  label=${parts[0]}
+  type=${parts[1]}
+  svc=${parts[2]}
+  method_or_service=${parts[3]}
+  path=${parts[4]:-}
+  payload=${parts[5]:-}
   DEMO_ID="$DEMO_PREFIX-$label-$(date +%s%3N)"
   echo "\n--- $label ($type) -> demo.id=$DEMO_ID ---"
   if [ "$type" = "grpc" ]; then
@@ -54,10 +74,11 @@ for entry in "${calls[@]}"; do
     resp=$(grpcurl -plaintext -H "x-demo-id: $DEMO_ID" -d "$payload" localhost:9090 "$method_or_service" 2>/dev/null || true)
     echo "Response: $resp"
     # query jaeger for the grpc-service traces with this demo id
-    sleep 1
+    # give the agent a moment to export
+    sleep 2
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
-    trace_map[$label]="$tid"
+    echo "$label:$tid" >> "$RESULTS_FILE"
   else
     # REST: method_or_service is HTTP method, payload_or_path is path or optional payload
     http_method="$method_or_service"; path="$payload"
@@ -67,17 +88,18 @@ for entry in "${calls[@]}"; do
       resp=$(curl -s -H "X-Demo-Id: $DEMO_ID" -H "Content-Type: application/json" -X "$http_method" -d "$payload" "http://localhost:8080$path" || true)
     fi
     echo "Response: $resp"
-    sleep 1
+    # give the agent a moment to export
+    sleep 2
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
-    trace_map[$label]="$tid"
+    echo "$label:$tid" >> "$RESULTS_FILE"
   fi
 done
 
 echo
 echo "Summary (label -> trace id(s)):"
-for k in "${!trace_map[@]}"; do
-  echo "$k -> ${trace_map[$k]}"
-done
+while IFS=: read -r k v; do
+  echo "$k -> $v"
+done < "$RESULTS_FILE"
 
 echo "Done. You can now open Jaeger UI (http://localhost:16686) and search by tag: demo.id=<demo-prefix>-<label>-* to find traces per API for comparison."
