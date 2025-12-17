@@ -19,6 +19,10 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void createOrder(Order request, StreamObserver<Order> responseObserver) {
+        try {
+            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
+            if (demoId != null && !demoId.isEmpty()) { Span.current().setAttribute("demo.id", demoId); }
+        } catch (Exception e) { }
         OrderData entity = new OrderData(request.getProduct(), request.getQuantity());
         if (request.getOrderId() != 0L) {
             entity.setOrderId(request.getOrderId());
@@ -35,6 +39,10 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void getOrder(OrderId request, StreamObserver<Order> responseObserver) {
+        try {
+            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
+            if (demoId != null && !demoId.isEmpty()) { Span.current().setAttribute("demo.id", demoId); }
+        } catch (Exception e) { }
         Long id = request.getId();
         OrderData found = service.findById(id);
         if (found == null) {
@@ -52,6 +60,10 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void listOrders(Empty request, StreamObserver<OrderList> responseObserver) {
+        try {
+            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
+            if (demoId != null && !demoId.isEmpty()) { Span.current().setAttribute("demo.id", demoId); }
+        } catch (Exception e) { }
         List<OrderData> all = service.findAll();
         OrderList.Builder builder = OrderList.newBuilder();
         builder.addAllOrders(all.stream().map(o -> Order.newBuilder()
@@ -65,6 +77,10 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void updateOrder(Order request, StreamObserver<Order> responseObserver) {
+        try {
+            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
+            if (demoId != null && !demoId.isEmpty()) { Span.current().setAttribute("demo.id", demoId); }
+        } catch (Exception e) { }
         if (request.getOrderId() == 0L) {
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Order id required for update").asRuntimeException());
             return;
@@ -83,6 +99,10 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void deleteOrder(OrderId request, StreamObserver<Empty> responseObserver) {
+        try {
+            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
+            if (demoId != null && !demoId.isEmpty()) { Span.current().setAttribute("demo.id", demoId); }
+        } catch (Exception e) { }
         Long id = request.getId();
         service.removeOrder(id);
         responseObserver.onNext(Empty.getDefaultInstance());
