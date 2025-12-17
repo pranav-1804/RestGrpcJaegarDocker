@@ -42,6 +42,7 @@ docker compose up -d --build
 3. Open Jaeger UI at: http://localhost:16686 and search for `grpc-service` or `rest-service` to view traces.
 
 Notes:
+
 - The Docker Compose file mounts `./opentelemetry-javaagent.jar` into both services and sets OTEL environment variables. Make sure the file exists at the repo root before `docker compose up`.
 - For demo purposes the sampler is set to `always_on` so traces will always be exported to Jaeger.
 
