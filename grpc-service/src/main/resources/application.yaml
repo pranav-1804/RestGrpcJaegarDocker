@@ -1,8 +1,10 @@
-server:
-  port: 8090
+grpc:
+  server:
+    port: 9090
+    enable-reflection: true
 spring:
   application:
-    name: grpc
+    name: grpc-service
   datasource:
     url: jdbc:postgresql://postgres:5432/mdsdb
     username: appuser
