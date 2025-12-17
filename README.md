@@ -46,6 +46,38 @@ Notes:
 - The Docker Compose file mounts `./opentelemetry-javaagent.jar` into both services and sets OTEL environment variables. Make sure the file exists at the repo root before `docker compose up`.
 - For demo purposes the sampler is set to `always_on` so traces will always be exported to Jaeger.
 
+---
+
+## 🔧 Trace demo scripts & comparing traces (quick start)
+
+- **Generate one trace per endpoint**
+
+  - Use the helper script to exercise every REST and gRPC endpoint and create a trace for each:
+
+  ```bash
+  # example: creates traces with demo id prefix 'demo-run'
+  ./scripts/trace-per-endpoint.sh demo-run
+  ```
+
+  - The script prints a **summary** mapping each call label (e.g., `create-order-grpc`) to the trace id(s) produced by Jaeger.
+
+- **How to find traces in Jaeger UI**
+
+  - Open Jaeger UI: http://localhost:16686
+  - Search by service name (`grpc-service` or `rest-service`) and use the **Tag** field with `demo.id` to filter. Example:
+    - `demo.id=demo-run-create-order-grpc-*` (search supports wildcards in the UI tag input)
+
+- **Compare two traces in Jaeger UI**
+
+  1.  Search and locate the two traces you want to compare.
+  2.  Check the boxes on the left of each trace (exactly two must be selected).
+  3.  Click the **Compare** button that appears near the top of the search results.
+  4.  The compare view shows traces side-by-side with span timelines; click individual spans to inspect tags (look for `demo.id`) and timestamps.
+
+  Notes:
+
+  - If the compare view is blank, ensure both traces have application/server spans (not only DB/jdbc spans) and that `demo.id` exists on the spans you expect to compare. Reload the UI or try a different browser if the UI fails to render.
+
 ## Inspect available services
 
 ```bash
