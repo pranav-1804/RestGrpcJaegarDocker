@@ -18,12 +18,19 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# helper to query jaeger for a demo id and service
+# -----------------------------
+# Helper: query Jaeger for demo.id
+# -----------------------------
 query_jaeger() {
   local svc="$1"; local demo="$2"; local limit=${3:-50}
-  # fetch recent traces for the service and filter for demo.id==demo
-  curl -s "http://localhost:16686/api/traces?service=$svc&limit=$limit" \
-    | jq -r --arg demo "$demo" '.data[]? | select(.spans[]?.tags[]? | (.key=="demo.id" and .value==$demo)) | .traceID' || true
+  local tid=""
+  for i in {1..5}; do
+    tid=$(curl -s "http://localhost:16686/api/traces?service=$svc&limit=$limit" \
+      | jq -r --arg demo "$demo" '.data[]? | select(.spans[]?.tags[]? | (.key=="demo.id" and .value==$demo)) | .traceID' || true)
+    [ -n "$tid" ] && break
+    sleep 2
+  done
+  echo "$tid"
 }
 
 DEMO_PREFIX=${1:-demo}
@@ -52,15 +59,13 @@ echo "Created base REST order id: $BASE_ID_REST"
 # -----------------------------
 declare -a calls
 
-# Format: label|type|svc|method_or_service|payload_or_path
-# type: grpc or rest
 # gRPC calls
 calls+=("hello-grpc|grpc|grpc-service|com.example.grpc.HelloService/SayHello|{\"name\":\"Grpc Service\"}")
 calls+=("create-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/CreateOrder|{\"product\":\"DemoWidget\",\"quantity\":1}")
 calls+=("list-orders-grpc|grpc|grpc-service|com.example.grpc.OrderService/ListOrders|{}")
-calls+=("get-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/GetOrder|{\"id\":$BASE_ID}")
-calls+=("update-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/UpdateOrder|{\"orderId\":$BASE_ID,\"product\":\"Updated\",\"quantity\":2}")
-calls+=("delete-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/DeleteOrder|{\"id\":$BASE_ID}")
+calls+=("get-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/GetOrder|{\"id\":\"$BASE_ID\"}")
+calls+=("update-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/UpdateOrder|{\"orderId\":\"$BASE_ID\",\"product\":\"Updated\",\"quantity\":2}")
+calls+=("delete-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/DeleteOrder|{\"id\":\"$BASE_ID\"}")
 
 # REST calls
 calls+=("test-rest|rest|rest-service|GET|/orders/test")
@@ -92,7 +97,7 @@ for entry in "${calls[@]}"; do
   if [ "$type" = "grpc" ]; then
     resp=$(grpcurl -plaintext -H "x-demo-id: $DEMO_ID" -d "$payload" localhost:9090 "$method_or_service" 2>/dev/null || true)
     echo "Response: $resp"
-    sleep 2
+    sleep 5  # allow exporter to flush
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
     echo "$label:$tid" >> "$RESULTS_FILE"
@@ -104,7 +109,7 @@ for entry in "${calls[@]}"; do
       resp=$(curl -s -H "X-Demo-Id: $DEMO_ID" -H "Content-Type: application/json" -X "$http_method" -d "$payload" "http://localhost:8080$path" || true)
     fi
     echo "Response: $resp"
-    sleep 2
+    sleep 5  # allow exporter to flush
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
     echo "$label:$tid" >> "$RESULTS_FILE"
