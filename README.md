@@ -1,4 +1,182 @@
-## 🔧 Trace demo scripts & comparing traces (quick start)
+# REST vs gRPC - Implementing two versions of the same multi-service app using REST and gRPC to compare latency and observability.
+
+This project demonstrates a **REST + gRPC multi service architecture** with **distributed tracing using Jaeger**, fully containerized using **Docker and Docker Compose**.
+
+The setup allows you to:
+- Run REST and gRPC services together
+- Store the data in PostGreSQL Database
+- Capture end-to-end traces using Jaeger
+- Test CRUD operations using REST (curl) and gRPC (grpcurl)
+
+---
+
+## Tech Stack
+
+- Java (Spring Boot)
+- REST API
+- gRPC
+- OpenTelemetry Java Agent
+- Jaeger
+- PostGreSQL
+- Docker & Docker Compose
+
+---
+
+## Prerequisites ✅
+
+Make sure the following tools are installed:
+
+- Docker (20+)
+- Docker Compose (v2 recommended)
+- Git
+- (Optional) `grpcurl` for testing gRPC endpoints
+---
+
+
+
+
+## BUILD AND RUN THE APPLICATION
+
+From the repository root:
+
+```bash
+# build & start (uses docker-compose.yml in repo root)
+docker compose up -d --build
+
+# confirm services
+docker compose ps
+```
+
+
+
+## Testing CRUD Operations
+
+This section demonstrates how to test CRUD operations for both **REST** and **GRPC** services once the stack is running via Docker Compose.
+
+---
+
+## REST API – CRUD Operations
+
+**http://localhost:8080/orders**
+
+### TEST THE SERVICE 
+
+```bash
+curl http://localhost:8080/test
+````
+
+### CREATE (POST)
+
+```bash
+curl -X POST http://localhost:8080/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+        "product": "Widget",
+        "quantity": 5
+      }'
+````
+
+### READ ALL (GET)
+
+```bash
+curl http://localhost:8080/orders
+````
+
+### READ BY ID (GET)
+
+```bash
+curl http://localhost:8080/orders/{id}
+````
+
+### UPDATE (PUT)
+
+```bash
+curl -X PUT http://localhost:8080/orders/{id} \
+  -H "Content-Type: application/json" \
+  -d '{
+        "product": "WidgetPro",
+        "quantity": 10
+      }'
+````
+
+### DELETE (DELETE)
+
+```bash
+curl -X DELETE http://localhost:8080/orders/{id}
+````
+
+## GRPC – CRUD Operations
+
+gRPC server listens on port `9090` by default.
+
+
+### Inspect available services
+
+```bash
+# list services
+grpcurl -plaintext localhost:9090 list
+
+# describe OrderService
+grpcurl -plaintext localhost:9090 describe com.example.grpc.OrderService
+```
+
+### HelloService (basic check)
+
+```bash
+grpcurl -plaintext -d '{"name":"Grpc Service"}' localhost:9090 com.example.grpc.HelloService/SayHello
+# Expected response:
+# { "message": "Hello, Grpc Service" }
+```
+
+
+### Create order:
+
+```bash
+grpcurl -plaintext -d '{"product":"Widget","quantity":5}' localhost:9090 com.example.grpc.OrderService/CreateOrder
+```
+
+### List orders:
+
+```bash
+grpcurl -plaintext -d '{}' localhost:9090 com.example.grpc.OrderService/ListOrders
+```
+
+### Get order (example id 5):
+
+```bash
+grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/GetOrder
+```
+
+### Update order:
+
+```bash
+grpcurl -plaintext -d '{"orderId":5,"product":"WidgetPrime","quantity":10}' localhost:9090 com.example.grpc.OrderService/UpdateOrder
+```
+
+### Delete order:
+
+```bash
+grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/DeleteOrder
+```
+
+Notes:
+
+- Use `-plaintext` when the server is unsecured (default in local compose setup).
+- The server's proto file is `src/main/proto/index.proto`.
+- If you don't have `grpcurl` on your host, you can run it inside a container:
+
+```bash
+docker run --rm --network host fullstorydev/grpcurl -plaintext localhost:9090 list
+```
+
+### Troubleshooting
+
+- If `grpcurl` reports connection refused, ensure the gRPC container is running and port `9090` is exposed in `docker compose ps`.
+- If DB-dependent operations fail during tests locally, either start the `postgres` service from compose or run tests that use an in-memory DB.
+
+
+
+## 🔧 Trace demo scripts & comparing traces using Jaegar(quick start)
 
 - **Generate one trace per endpoint**
 
@@ -27,34 +205,9 @@
   Notes:
 
   - If the compare view is blank, ensure both traces have application/server spans (not only DB/jdbc spans) and that `demo.id` exists on the spans you expect to compare. Reload the UI or try a different browser if the UI fails to render.
-
-# grpc-service — Quick gRPC commands
-
-This README documents how to start the gRPC service and run basic commands (using `grpcurl`) to exercise the Hello and Order services.
-
-## Prerequisites ✅
-
-- Docker & Docker Compose
-- Java + Maven (only required if you want to build locally)
-- grpcurl (install via Homebrew: `brew install grpcurl`)
-
-## Start the stack
-
-From the repository root:
-
-```bash
-# build & start (uses docker-compose.yml in repo root)
-docker compose up -d --build
-
-# confirm services
-docker compose ps
-```
-
-gRPC server listens on port `9090` by default.
-
+ 
 ## Auto-instrumentation with Jaeger (OpenTelemetry Java agent)
-
-Follow these steps to quickly enable tracing and view traces in Jaeger:
+  Follow these steps to quickly enable tracing and view traces in Jaeger:
 
 1. Download the OpenTelemetry Java agent into the repository root:
 
@@ -78,71 +231,3 @@ Notes:
 
 ---
 
-## Inspect available services
-
-```bash
-# list services
-grpcurl -plaintext localhost:9090 list
-
-# describe OrderService
-grpcurl -plaintext localhost:9090 describe com.example.grpc.OrderService
-```
-
-## HelloService (basic check)
-
-```bash
-grpcurl -plaintext -d '{"name":"Grpc Service"}' localhost:9090 com.example.grpc.HelloService/SayHello
-# Expected response:
-# { "message": "Hello, Grpc Service" }
-```
-
-## OrderService — CRUD examples
-
-Create order:
-
-```bash
-grpcurl -plaintext -d '{"product":"Widget","quantity":5}' localhost:9090 com.example.grpc.OrderService/CreateOrder
-```
-
-List orders:
-
-```bash
-grpcurl -plaintext -d '{}' localhost:9090 com.example.grpc.OrderService/ListOrders
-```
-
-Get order (example id 5):
-
-```bash
-grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/GetOrder
-```
-
-Update order:
-
-```bash
-grpcurl -plaintext -d '{"orderId":5,"product":"WidgetPrime","quantity":10}' localhost:9090 com.example.grpc.OrderService/UpdateOrder
-```
-
-Delete order:
-
-```bash
-grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/DeleteOrder
-```
-
-Notes:
-
-- Use `-plaintext` when the server is unsecured (default in local compose setup).
-- The server's proto file is `src/main/proto/index.proto`.
-- If you don't have `grpcurl` on your host, you can run it inside a container:
-
-```bash
-docker run --rm --network host fullstorydev/grpcurl -plaintext localhost:9090 list
-```
-
-## Troubleshooting
-
-- If `grpcurl` reports connection refused, ensure the gRPC container is running and port `9090` is exposed in `docker compose ps`.
-- If DB-dependent operations fail during tests locally, either start the `postgres` service from compose or run tests that use an in-memory DB.
-
----
-
-If you'd like, I can add automated tests that call these endpoints (unit or integration). 🔧
