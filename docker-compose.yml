@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 services:
   postgres:
     image: postgres:15
@@ -22,6 +22,17 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
       SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: punekar
+      # OpenTelemetry auto-instrumentation (mount agent jar at /opentelemetry/...)
+      JAVA_TOOL_OPTIONS: -javaagent:/opentelemetry/opentelemetry-javaagent.jar
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_RESOURCE_ATTRIBUTES: service.name=rest-service
+      OTEL_PROPAGATORS: tracecontext,baggage
+      OTEL_TRACES_SAMPLER: always_on
+      OTEL_INSTRUMENTATION_HTTP_SERVER_CAPTURE_HEADERS: X-Demo-Id
+    volumes:
+      - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
       - "8080:8080"
     restart: always
@@ -31,12 +42,33 @@ services:
     container_name: grpc_service
     depends_on:
       - postgres
+      - jaeger
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
       SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: punekar
+      # OpenTelemetry auto-instrumentation (mount agent jar at /opentelemetry/...)
+      JAVA_TOOL_OPTIONS: -javaagent:/opentelemetry/opentelemetry-javaagent.jar
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_RESOURCE_ATTRIBUTES: service.name=grpc-service
+      OTEL_PROPAGATORS: tracecontext,baggage
+      OTEL_TRACES_SAMPLER: always_on
+      OTEL_INSTRUMENTATION_GRPC_SERVER_CAPTURE_HEADERS: x-demo-id
+    volumes:
+      - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
       - "9090:9090"
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.49
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # Jaeger collector (HTTP)
+      - "14250:14250" # Jaeger gRPC (optional)
     restart: unless-stopped
 
 volumes:

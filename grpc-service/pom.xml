@@ -86,6 +86,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- OpenTelemetry API to set span attributes from application code -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <version>1.31.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
