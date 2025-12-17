@@ -28,16 +28,33 @@ query_jaeger() {
 
 DEMO_PREFIX=${1:-demo}
 
-echo "Creating a base order via gRPC to obtain an orderId (used for get/update/delete tests)"
+# -----------------------------
+# Create base order via gRPC
+# -----------------------------
+echo "Creating a base order via gRPC to obtain an orderId (used for gRPC get/update/delete tests)"
 BASE_DEMO="$DEMO_PREFIX-base-$(date +%s)"
 BASE_RESP=$(grpcurl -plaintext -H "x-demo-id: $BASE_DEMO" -d '{"product":"DemoWidget","quantity":1}' localhost:9090 com.example.grpc.OrderService/CreateOrder)
 BASE_ID=$(echo "$BASE_RESP" | jq -r '.orderId')
-echo "Created base order id: $BASE_ID"
+echo "Created base gRPC order id: $BASE_ID"
 
+# -----------------------------
+# Create base order via REST
+# -----------------------------
+echo "Creating a base order via REST to obtain an orderId (used for REST get/update/delete tests)"
+BASE_DEMO_REST="$DEMO_PREFIX-base-rest-$(date +%s)"
+BASE_RESP_REST=$(curl -s -H "X-Demo-Id: $BASE_DEMO_REST" -H "Content-Type: application/json" \
+  -X POST -d '{"product":"DemoWidget","quantity":1}' http://localhost:8080/orders)
+BASE_ID_REST=$(echo "$BASE_RESP_REST" | jq -r '.orderId')
+echo "Created base REST order id: $BASE_ID_REST"
+
+# -----------------------------
+# Define API calls
+# -----------------------------
 declare -a calls
 
 # Format: label|type|svc|method_or_service|payload_or_path
 # type: grpc or rest
+# gRPC calls
 calls+=("hello-grpc|grpc|grpc-service|com.example.grpc.HelloService/SayHello|{\"name\":\"Grpc Service\"}")
 calls+=("create-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/CreateOrder|{\"product\":\"DemoWidget\",\"quantity\":1}")
 calls+=("list-orders-grpc|grpc|grpc-service|com.example.grpc.OrderService/ListOrders|{}")
@@ -45,21 +62,23 @@ calls+=("get-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/GetOrder
 calls+=("update-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/UpdateOrder|{\"orderId\":$BASE_ID,\"product\":\"Updated\",\"quantity\":2}")
 calls+=("delete-order-grpc|grpc|grpc-service|com.example.grpc.OrderService/DeleteOrder|{\"id\":$BASE_ID}")
 
+# REST calls
 calls+=("test-rest|rest|rest-service|GET|/orders/test")
 calls+=("create-order-rest|rest|rest-service|POST|/orders|{\"product\":\"DemoWidget\",\"quantity\":1}")
 calls+=("list-orders-rest|rest|rest-service|GET|/orders")
-calls+=("get-order-rest|rest|rest-service|GET|/orders/$BASE_ID")
-calls+=("update-order-rest|rest|rest-service|PUT|/orders/$BASE_ID|{\"product\":\"Updated\",\"quantity\":2}")
-calls+=("delete-order-rest|rest|rest-service|DELETE|/orders/$BASE_ID")
+calls+=("get-order-rest|rest|rest-service|GET|/orders/$BASE_ID_REST")
+calls+=("update-order-rest|rest|rest-service|PUT|/orders/$BASE_ID_REST|{\"product\":\"Updated\",\"quantity\":2}")
+calls+=("delete-order-rest|rest|rest-service|DELETE|/orders/$BASE_ID_REST")
 
+# -----------------------------
+# Execute calls
+# -----------------------------
 echo
 echo "Executing calls to create one trace per API..."
-# macOS bash doesn't support associative arrays; use a temp file to record results
 RESULTS_FILE="$(mktemp /tmp/trace_results.XXXXXX)"
 trap 'rm -f "$RESULTS_FILE"' EXIT
 
 for entry in "${calls[@]}"; do
-  # split into parts robustly so REST entries can include both path and payload
   IFS='|' read -ra parts <<<"$entry"
   label=${parts[0]}
   type=${parts[1]}
@@ -69,26 +88,22 @@ for entry in "${calls[@]}"; do
   payload=${parts[5]:-}
   DEMO_ID="$DEMO_PREFIX-$label-$(date +%s%3N)"
   echo "\n--- $label ($type) -> demo.id=$DEMO_ID ---"
+
   if [ "$type" = "grpc" ]; then
-    # method_or_service holds the full gRPC method (e.g., com.example.grpc.HelloService/SayHello)
     resp=$(grpcurl -plaintext -H "x-demo-id: $DEMO_ID" -d "$payload" localhost:9090 "$method_or_service" 2>/dev/null || true)
     echo "Response: $resp"
-    # query jaeger for the grpc-service traces with this demo id
-    # give the agent a moment to export
     sleep 2
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
     echo "$label:$tid" >> "$RESULTS_FILE"
   else
-    # REST: method_or_service is HTTP method, payload_or_path is path or optional payload
-    http_method="$method_or_service"; path="$payload"
+    http_method="$method_or_service"
     if [ "$http_method" = "GET" ] || [ "$http_method" = "DELETE" ]; then
       resp=$(curl -s -H "X-Demo-Id: $DEMO_ID" -X "$http_method" "http://localhost:8080$path" || true)
     else
       resp=$(curl -s -H "X-Demo-Id: $DEMO_ID" -H "Content-Type: application/json" -X "$http_method" -d "$payload" "http://localhost:8080$path" || true)
     fi
     echo "Response: $resp"
-    # give the agent a moment to export
     sleep 2
     tid=$(query_jaeger "$svc" "$DEMO_ID")
     echo "Jaeger trace id(s): $tid"
@@ -96,6 +111,9 @@ for entry in "${calls[@]}"; do
   fi
 done
 
+# -----------------------------
+# Summary
+# -----------------------------
 echo
 echo "Summary (label -> trace id(s)):"
 while IFS=: read -r k v; do
