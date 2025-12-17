@@ -36,8 +36,8 @@ services:
       SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: punekar
     ports:
-      - "8090:8090"
-    restart: always
+      - "9090:9090"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
