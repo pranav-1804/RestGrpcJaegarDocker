@@ -1,0 +1,92 @@
+# grpc-service — Quick gRPC commands
+
+This README documents how to start the gRPC service and run basic commands (using `grpcurl`) to exercise the Hello and Order services.
+
+## Prerequisites ✅
+
+- Docker & Docker Compose
+- Java + Maven (only required if you want to build locally)
+- grpcurl (install via Homebrew: `brew install grpcurl`)
+
+## Start the stack
+
+From the repository root:
+
+```bash
+# build & start (uses docker-compose.yml in repo root)
+docker compose up -d --build
+
+# confirm services
+docker compose ps
+```
+
+gRPC server listens on port `9090` by default.
+
+## Inspect available services
+
+```bash
+# list services
+grpcurl -plaintext localhost:9090 list
+
+# describe OrderService
+grpcurl -plaintext localhost:9090 describe com.example.grpc.OrderService
+```
+
+## HelloService (basic check)
+
+```bash
+grpcurl -plaintext -d '{"name":"GitHub Copilot"}' localhost:9090 com.example.grpc.HelloService/SayHello
+# Expected response:
+# { "message": "Hello, GitHub Copilot" }
+```
+
+## OrderService — CRUD examples
+
+Create order:
+
+```bash
+grpcurl -plaintext -d '{"product":"Widget","quantity":5}' localhost:9090 com.example.grpc.OrderService/CreateOrder
+```
+
+List orders:
+
+```bash
+grpcurl -plaintext -d '{}' localhost:9090 com.example.grpc.OrderService/ListOrders
+```
+
+Get order (example id 5):
+
+```bash
+grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/GetOrder
+```
+
+Update order:
+
+```bash
+grpcurl -plaintext -d '{"orderId":5,"product":"WidgetPrime","quantity":10}' localhost:9090 com.example.grpc.OrderService/UpdateOrder
+```
+
+Delete order:
+
+```bash
+grpcurl -plaintext -d '{"id":5}' localhost:9090 com.example.grpc.OrderService/DeleteOrder
+```
+
+Notes:
+
+- Use `-plaintext` when the server is unsecured (default in local compose setup).
+- The server's proto file is `src/main/proto/index.proto`.
+- If you don't have `grpcurl` on your host, you can run it inside a container:
+
+```bash
+docker run --rm --network host fullstorydev/grpcurl -plaintext localhost:9090 list
+```
+
+## Troubleshooting
+
+- If `grpcurl` reports connection refused, ensure the gRPC container is running and port `9090` is exposed in `docker compose ps`.
+- If DB-dependent operations fail during tests locally, either start the `postgres` service from compose or run tests that use an in-memory DB.
+
+---
+
+If you'd like, I can add automated tests that call these endpoints (unit or integration). 🔧
