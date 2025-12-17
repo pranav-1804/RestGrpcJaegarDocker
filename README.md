@@ -22,6 +22,29 @@ docker compose ps
 
 gRPC server listens on port `9090` by default.
 
+## Auto-instrumentation with Jaeger (OpenTelemetry Java agent)
+
+Follow these steps to quickly enable tracing and view traces in Jaeger:
+
+1. Download the OpenTelemetry Java agent into the repository root:
+
+```bash
+curl -sSL -o opentelemetry-javaagent.jar \
+	https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+```
+
+2. Bring up the stack (the Compose file is already configured to mount the agent and start Jaeger):
+
+```bash
+docker compose up -d --build
+```
+
+3. Open Jaeger UI at: http://localhost:16686 and search for `grpc-service` or `rest-service` to view traces.
+
+Notes:
+- The Docker Compose file mounts `./opentelemetry-javaagent.jar` into both services and sets OTEL environment variables. Make sure the file exists at the repo root before `docker compose up`.
+- For demo purposes the sampler is set to `always_on` so traces will always be exported to Jaeger.
+
 ## Inspect available services
 
 ```bash
