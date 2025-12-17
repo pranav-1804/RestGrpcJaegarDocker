@@ -35,9 +35,9 @@ grpcurl -plaintext localhost:9090 describe com.example.grpc.OrderService
 ## HelloService (basic check)
 
 ```bash
-grpcurl -plaintext -d '{"name":"GitHub Copilot"}' localhost:9090 com.example.grpc.HelloService/SayHello
+grpcurl -plaintext -d '{"name":"Grpc Service"}' localhost:9090 com.example.grpc.HelloService/SayHello
 # Expected response:
-# { "message": "Hello, GitHub Copilot" }
+# { "message": "Hello, Grpc Service" }
 ```
 
 ## OrderService — CRUD examples
