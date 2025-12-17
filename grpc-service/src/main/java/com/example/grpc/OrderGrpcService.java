@@ -5,6 +5,7 @@ import com.example.grpc.service.OrderService;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import io.opentelemetry.api.trace.Span;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 

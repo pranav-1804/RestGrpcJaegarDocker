@@ -1,6 +1,7 @@
 package com.example.grpc;
 
 import io.grpc.stub.StreamObserver;
+import io.opentelemetry.api.trace.Span;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 @GrpcService
