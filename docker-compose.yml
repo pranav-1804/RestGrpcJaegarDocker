@@ -30,6 +30,7 @@ services:
       OTEL_RESOURCE_ATTRIBUTES: service.name=rest-service
       OTEL_PROPAGATORS: tracecontext,baggage
       OTEL_TRACES_SAMPLER: always_on
+      OTEL_INSTRUMENTATION_HTTP_SERVER_CAPTURE_HEADERS: X-Demo-Id
     volumes:
       - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
@@ -54,6 +55,7 @@ services:
       OTEL_RESOURCE_ATTRIBUTES: service.name=grpc-service
       OTEL_PROPAGATORS: tracecontext,baggage
       OTEL_TRACES_SAMPLER: always_on
+      OTEL_INSTRUMENTATION_GRPC_SERVER_CAPTURE_HEADERS: x-demo-id
     volumes:
       - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
