@@ -11,7 +11,10 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mds-net
     restart: always
+    
 
   rest-service:
     build: ./rest-service
@@ -35,6 +38,8 @@ services:
       - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
       - "8080:8080"
+    networks:
+      - mds-net
     restart: always
 
   grpc-service:
@@ -60,6 +65,8 @@ services:
       - ./opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar:ro
     ports:
       - "9090:9090"
+    networks:
+      - mds-net
     restart: unless-stopped
 
   jaeger:
@@ -70,6 +77,12 @@ services:
       - "14268:14268" # Jaeger collector (HTTP)
       - "14250:14250" # Jaeger gRPC (optional)
     restart: unless-stopped
+    networks:
+      - mds-net
 
 volumes:
   postgres_data:
+
+networks:
+  mds-net:
+    driver: bridge
