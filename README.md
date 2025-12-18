@@ -32,7 +32,8 @@ Make sure the following tools are installed:
 - (Optional) `grpcurl` for testing gRPC endpoints
 ---
 
-
+## Chosen OSS/CNCF tool: Jaeger.
+Jaeger is used as a distributed tracing system to collect, store, and visualize traces from the REST and gRPC services, enabling end‑to‑end request tracking, latency analysis, and troubleshooting in a cloud‑native, microservices‑style architecture.
 
 
 ## BUILD AND RUN THE APPLICATION
