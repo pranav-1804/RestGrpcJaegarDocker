@@ -44,10 +44,21 @@ From the repository root:
 # build & start (uses docker-compose.yml in repo root)
 docker compose up -d --build
 
+```
+```bash
 # confirm services
 docker compose ps
 ```
 
+Expected output:
+
+```
+CONTAINER ID   IMAGE                               COMMAND                  CREATED              STATUS              PORTS                                                                                                                                               NAMES
+786a8eb10282   restgrpcjaegardocker-rest-service   "java -jar /app/app.…"   About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp                                                                                                         rest_service
+ee9dd52a3415   restgrpcjaegardocker-grpc-service   "java -jar /app/app.…"   About a minute ago   Up About a minute   0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp                                                                                                         grpc_service
+4ecec0de4127   postgres:15                         "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp                                                                                                         mds_postgres
+066b31d64d69   jaegertracing/all-in-one:1.49       "/go/bin/all-in-one-…"   About a minute ago   Up About a minute   0.0.0.0:14250->14250/tcp, [::]:14250->14250/tcp, 0.0.0.0:14268->14268/tcp, [::]:14268->14268/tcp, 0.0.0.0:16686->16686/tcp, [::]:16686->16686/tcp   jaeger
+```
 
 
 ## Testing CRUD Operations
@@ -231,4 +242,41 @@ Notes:
 - For demo purposes the sampler is set to `always_on` so traces will always be exported to Jaeger.
 
 ---
+
+## REST vs gRPC – Distributed Tracing Comparison (Jaeger)
+
+We implemented the same **Create Order** functionality using:
+- REST (HTTP/JSON)
+- gRPC (HTTP/2 + Protobuf)
+
+Both services:
+- Share the same PostgreSQL database
+- Use Spring Boot and Spring Data JPA
+- Execute identical business logic
+
+### Jaeger Trace Comparison – Create Order
+
+![REST vs gRPC Jaeger Trace](docs/jaeger-rest-vs-grpc-create-order.png)
+
+### Observations
+
+| Aspect | REST | gRPC |
+|------|------|------|
+| Protocol | HTTP/1.1 | HTTP/2 |
+| Payload | JSON | Protobuf (binary) |
+| Avg Latency | ~52 ms | ~8 ms |
+| DB Operations | Same | Same |
+| Spans | 6 | 6 |
+
+### Analysis
+
+Although both implementations perform the same database operations, the gRPC-based service consistently shows lower latency. This is primarily due to:
+
+- Binary serialization (Protobuf)
+- Reduced payload size
+- Efficient multiplexing via HTTP/2
+- Lower framework overhead compared to REST + JSON
+
+This comparison demonstrates how protocol choice alone can significantly impact performance in distributed systems.
+
 
