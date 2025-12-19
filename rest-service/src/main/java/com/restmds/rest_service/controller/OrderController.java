@@ -11,14 +11,6 @@ import java.util.List;
     @RestController
     @RequestMapping("/orders")
     public class OrderController {
-        @GetMapping("/test")
-        public String home(@RequestHeader(value = "X-Demo-Id", required = false) String demoId) {
-            if (demoId != null && !demoId.isEmpty()) {
-                try { Span.current().setAttribute("demo.id", demoId); } catch (Exception e) { /* ignore */ }
-            }
-            return "REST Service is running!";
-        }
-
         @Autowired
         private OrderService service;
 
