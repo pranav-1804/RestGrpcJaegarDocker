@@ -1,5 +1,9 @@
 # REST vs gRPC - Implementing two versions of the same multi-service app using REST and gRPC to compare latency and observability.
 
+
+
+## High Level Architecture
+
 ![Architecture](./images/rest-grpc-arch.png)
 
 ---
