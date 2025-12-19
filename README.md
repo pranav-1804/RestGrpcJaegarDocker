@@ -6,6 +6,8 @@
 
 ![Architecture](./images/rest-grpc-arch.png)
 
+This project is an order management application that exposes the same functionality over both REST and gRPC, backed by a PostgreSQL database. The client can call either the REST-based or gRPC-based order service, which then communicates with the Postgres database over regular DB connections. Jaeger is integrated to trace and observe requests flowing between the client, the order services, and the database for distributed tracing and performance analysis
+
 ---
 
 ## Order Application - REST and gRPC
