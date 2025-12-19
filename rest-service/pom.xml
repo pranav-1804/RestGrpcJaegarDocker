@@ -54,7 +54,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- OpenTelemetry API to set span attributes from application code -->
 		<dependency>
 			<groupId>io.opentelemetry</groupId>

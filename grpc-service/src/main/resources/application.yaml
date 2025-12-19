@@ -5,12 +5,6 @@ grpc:
 spring:
   application:
     name: grpc-service
-  datasource:
-    url: jdbc:postgresql://postgres:5432/mdsdb
-    username: appuser
-    password: punekar
-    driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: update

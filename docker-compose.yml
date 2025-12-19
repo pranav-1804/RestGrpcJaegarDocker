@@ -22,9 +22,7 @@ services:
     depends_on:
       - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
-      SPRING_DATASOURCE_USERNAME: appuser
-      SPRING_DATASOURCE_PASSWORD: punekar
+      SPRING_PROFILES_ACTIVE: prod
       # OpenTelemetry auto-instrumentation (mount agent jar at /opentelemetry/...)
       JAVA_TOOL_OPTIONS: -javaagent:/opentelemetry/opentelemetry-javaagent.jar
       OTEL_TRACES_EXPORTER: otlp
@@ -49,9 +47,7 @@ services:
       - postgres
       - jaeger
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mdsdb
-      SPRING_DATASOURCE_USERNAME: appuser
-      SPRING_DATASOURCE_PASSWORD: punekar
+      SPRING_PROFILES_ACTIVE: prod
       # OpenTelemetry auto-instrumentation (mount agent jar at /opentelemetry/...)
       JAVA_TOOL_OPTIONS: -javaagent:/opentelemetry/opentelemetry-javaagent.jar
       OTEL_TRACES_EXPORTER: otlp
