@@ -270,7 +270,7 @@ Both services:
 
 ### Jaeger Trace Comparison – Create Order
 
-![REST vs gRPC Jaeger Trace](docs/jaeger-rest-vs-grpc-create-order.png)
+![REST vs gRPC Jaeger Trace](images/jaeger-rest-vs-grpc-create-order.png)
 
 ### Observations
 
