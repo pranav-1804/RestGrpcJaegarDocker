@@ -1,8 +1,24 @@
 # REST vs gRPC - Implementing two versions of the same multi-service app using REST and gRPC to compare latency and observability.
 
+![Architecture](./images/rest-grpc-arch.png)
+
+---
+
+## Order Application - REST and gRPC
+
+This document explains how to run, test, and debug the **Order Application** application consisting of:
+
+- **Spring Boot API with REST (rest-service)** (Java)
+- **Spring Boot API with gRPC (grpc-service)** (Java)
+- **Postgres**
+- **Jaeger**
+
+---
+
 This project demonstrates a **REST + gRPC multi service architecture** with **distributed tracing using Jaeger**, fully containerized using **Docker and Docker Compose**.
 
 The setup allows you to:
+
 - Run REST and gRPC services together
 - Store the data in PostGreSQL Database
 - Capture end-to-end traces using Jaeger
@@ -30,11 +46,12 @@ Make sure the following tools are installed:
 - Docker Compose (v2 recommended)
 - Git
 - (Optional) `grpcurl` for testing gRPC endpoints
+
 ---
 
 ## Chosen OSS/CNCF tool: **Jaeger**.
-Jaeger is used as a distributed tracing system to collect, store, and visualize traces from the REST and gRPC services, enabling end‑to‑end request tracking, latency analysis, and troubleshooting in a cloud‑native, microservices‑style architecture.
 
+Jaeger is used as a distributed tracing system to collect, store, and visualize traces from the REST and gRPC services, enabling end‑to‑end request tracking, latency analysis, and troubleshooting in a cloud‑native, microservices‑style architecture.
 
 ## BUILD AND RUN THE APPLICATION
 
@@ -71,11 +88,11 @@ This section demonstrates how to test CRUD operations for both **REST** and **GR
 
 **http://localhost:8080/orders**
 
-### TEST THE SERVICE 
+### TEST THE SERVICE
 
 ```bash
 curl http://localhost:8080/test
-````
+```
 
 ### CREATE (POST)
 
@@ -86,19 +103,19 @@ curl -X POST http://localhost:8080/orders \
         "product": "Widget",
         "quantity": 5
       }'
-````
+```
 
 ### READ ALL (GET)
 
 ```bash
 curl http://localhost:8080/orders
-````
+```
 
 ### READ BY ID (GET)
 
 ```bash
 curl http://localhost:8080/orders/{id}
-````
+```
 
 ### UPDATE (PUT)
 
@@ -109,18 +126,17 @@ curl -X PUT http://localhost:8080/orders/{id} \
         "product": "WidgetPro",
         "quantity": 10
       }'
-````
+```
 
 ### DELETE (DELETE)
 
 ```bash
 curl -X DELETE http://localhost:8080/orders/{id}
-````
+```
 
 ## GRPC – CRUD Operations
 
 gRPC server listens on port `9090` by default.
-
 
 ### Inspect available services
 
@@ -139,7 +155,6 @@ grpcurl -plaintext -d '{"name":"Grpc Service"}' localhost:9090 com.example.grpc.
 # Expected response:
 # { "message": "Hello, Grpc Service" }
 ```
-
 
 ### Create order:
 
@@ -186,8 +201,6 @@ docker run --rm --network host fullstorydev/grpcurl -plaintext localhost:9090 li
 - If `grpcurl` reports connection refused, ensure the gRPC container is running and port `9090` is exposed in `docker compose ps`.
 - If DB-dependent operations fail during tests locally, either start the `postgres` service from compose or run tests that use an in-memory DB.
 
-
-
 ## 🔧 Trace demo scripts & comparing traces using Jaegar(quick start)
 
 - **Generate one trace per endpoint**
@@ -217,9 +230,10 @@ docker run --rm --network host fullstorydev/grpcurl -plaintext localhost:9090 li
   Notes:
 
   - If the compare view is blank, ensure both traces have application/server spans (not only DB/jdbc spans) and that `demo.id` exists on the spans you expect to compare. Reload the UI or try a different browser if the UI fails to render.
- 
+
 ## Auto-instrumentation with Jaeger (OpenTelemetry Java agent)
-  Follow these steps to quickly enable tracing and view traces in Jaeger:
+
+Follow these steps to quickly enable tracing and view traces in Jaeger:
 
 1. Download the OpenTelemetry Java agent into the repository root:
 
