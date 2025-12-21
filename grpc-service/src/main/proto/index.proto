@@ -42,3 +42,14 @@ service OrderService {
   rpc UpdateOrder (Order) returns (Order);
   rpc DeleteOrder (OrderId) returns (google.protobuf.Empty);
 }
+
+service DebugService {
+  rpc GetDebugInfo (DebugReq) returns (DebugResponse);
+}
+
+message DebugReq {}
+
+message DebugResponse {
+  map<string, string> data = 1;
+}
+
