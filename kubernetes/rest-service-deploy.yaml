@@ -1,0 +1,83 @@
+# REST Service Deployment (2 replicas)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest-service
+  labels:
+    app: rest-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rest-service
+  template:
+    metadata:
+      labels:
+        app: rest-service
+    spec:
+      containers:
+        - name: rest-service
+          image: pranav446/restgrpcjaegardocker-rest-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:          
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                  fieldRef:
+                    fieldPath: status.podIP
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            # OpenTelemetry (comment out if not needed for now)
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+            - name : OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=rest-service,service.instance.id=$(POD_NAME),k8s.pod.ip=$(POD_IP),k8s.node.name=$(NODE_NAME)"
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
+            - name: OTEL_INSTRUMENTATION_HTTP_SERVER_CAPTURE_HEADERS
+              value: X-Demo-Id
+            - name: OTEL_TRACES_SAMPLER
+              value: "always_on"
+            
+          # volumeMounts for OTEL agent (comment out if not needed)
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# REST Service Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rest-service
+  labels:
+    app: rest-service
+spec:
+  type: NodePort
+  sessionAffinity: None
+  selector:
+    app: rest-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080

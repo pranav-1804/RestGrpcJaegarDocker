@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-service
+  labels:
+    app: grpc-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: grpc-service
+  template:
+    metadata:
+      labels:
+        app: grpc-service
+    spec:
+      containers:
+        - name: grpc-service
+          image: pranav446/restgrpcjaegardocker-grpc-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9090
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                  fieldRef:
+                    fieldPath: status.podIP
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            # OpenTelemetry (comment out if not needed for now)
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=grpc-service,service.instance.id=$(POD_NAME),k8s.pod.ip=$(POD_IP),k8s.node.name=$(NODE_NAME)"
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
+            - name: OTEL_INSTRUMENTATION_HTTP_SERVER_CAPTURE_HEADERS
+              value: X-Demo-Id
+            - name: OTEL_TRACES_SAMPLER
+              value: "always_on"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-service
+  labels:
+    app: grpc-service
+spec:
+  type: NodePort
+  sessionAffinity: None
+  selector:
+    app: grpc-service
+  ports:
+    - name: grpc
+      port: 9090
+      targetPort: 9090
+      nodePort: 30090

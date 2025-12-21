@@ -17,7 +17,9 @@ services:
     
 
   rest-service:
-    build: ./rest-service
+    build:
+      context: .
+      dockerfile: rest-service/Dockerfile
     container_name: rest_service
     depends_on:
       - postgres
@@ -41,14 +43,15 @@ services:
     restart: always
 
   grpc-service:
-    build: ./grpc-service
+    build:
+      context: .
+      dockerfile: grpc-service/Dockerfile
     container_name: grpc_service
     depends_on:
       - postgres
       - jaeger
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      # OpenTelemetry auto-instrumentation (mount agent jar at /opentelemetry/...)
       JAVA_TOOL_OPTIONS: -javaagent:/opentelemetry/opentelemetry-javaagent.jar
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
