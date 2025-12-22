@@ -1,35 +1,19 @@
 package com.example.grpc;
 
 import io.grpc.stub.StreamObserver;
-import io.opentelemetry.api.trace.Span;
 import net.devh.boot.grpc.server.service.GrpcService;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @GrpcService
-public class DebugGrpcService extends DebugGrpcServiceGrpc.DebugServiceImplBase {
+public class DebugGrpcService extends DebugServiceGrpc.DebugServiceImplBase {
 
     @Override
-    public void getDebugInfo(Empty request, StreamObserver<DebugResponse> responseObserver) {
-        Map<String, String> debugData = new HashMap<>();
-
-        try {
-            String demoId = com.example.grpc.interceptor.DemoIdGrpcInterceptor.DEMO_CTX_KEY.get();
-            if (demoId != null && !demoId.isEmpty()) {
-                Span.current().setAttribute("demo.id", demoId);
-                debugData.put("demo.id", demoId);
-            }
-        } catch (Exception e) {
-            // ignore safely
-        }
-
-        // Add any debug values you want
-        debugData.put("service", "debug-service");
-        debugData.put("status", "OK");
+    public void getDebugInfo(
+            DebugReq request,
+            StreamObserver<DebugResponse> responseObserver) {
 
         DebugResponse response = DebugResponse.newBuilder()
-                .putAllData(debugData)
+                .putData("status", "OK")
+                .putData("service", "debug")
                 .build();
 
         responseObserver.onNext(response);
