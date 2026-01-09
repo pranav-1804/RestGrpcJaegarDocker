@@ -35,16 +35,16 @@ minikube start
 
 ### PostgreSQL Deployment
 
-kubectl apply -f postgres-deploy.yaml
+kubectl apply -f postgres.yaml
 
 ### Jaegar Deployment
 
-kubectl apply -f jaeger-deploy.yaml
+kubectl apply -f jaeger.yaml
 
 ### REST & gRPC Services
 
-kubectl apply -f rest-service-deploy.yaml
-kubectl apply -f grpc-service-deploy.yaml
+kubectl apply -f rest-service.yaml
+kubectl apply -f grpc-service.yaml
 
 
 ---
@@ -241,10 +241,10 @@ On starting minikube again, the services would be restarted automatically withou
 
 If you want to remove the services
 
-kubectl delete -f rest-service-deploy.yaml
-kubectl delete -f grpc-service-deploy.yaml
-kubectl delete -f jaeger-deploy.yaml
-kubectl delete -f postgres-deploy.yaml
+kubectl delete -f rest-service.yaml
+kubectl delete -f grpc-service.yaml
+kubectl delete -f jaeger.yaml
+kubectl delete -f postgres.yaml
 
 
 ---
@@ -255,6 +255,7 @@ kubectl delete -f postgres-deploy.yaml
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
 - [Jaeger Documentation](https://www.jaegertracing.io/docs/)
 - [OpenTelemetry Java Agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation)
+
 
 
 
