@@ -198,8 +198,8 @@ http://192.168.49.2:31080
 
 ### Expected Output
 
-✅ Using URL: http://192.168.49.2:31080
-📊 Sending 20 requests...
+Using URL: http://192.168.49.2:31080
+Sending 20 requests...
 Request 1: rest-service-7ff9c76544-vrmnw
 Request 2: rest-service-7ff9c76544-abcdx
 Request 3: rest-service-7ff9c76544-xyz12
@@ -208,7 +208,7 @@ Request 3: rest-service-7ff9c76544-xyz12
 rest-service-7ff9c76544-vrmnw: 17 requests (34.0%)
 rest-service-7ff9c76544-abcdx: 17 requests (34.0%)
 rest-service-7ff9c76544-xyz12: 16 requests (32.0%)
-🎉 Kubernetes Service load balancing demonstrated!
+Kubernetes Service load balancing demonstrated!
 
 ## 8. Kubernetes Self-Healing Demo
 
@@ -255,6 +255,7 @@ kubectl delete -f postgres-deploy.yaml
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
 - [Jaeger Documentation](https://www.jaegertracing.io/docs/)
 - [OpenTelemetry Java Agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation)
+
 
 
 
