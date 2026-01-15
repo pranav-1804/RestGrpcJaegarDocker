@@ -20,6 +20,23 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9090
+          livenessProbe:
+            grpc:
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          readinessProbe:
+            grpc:
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          startupProbe:
+            grpc:
+              port: 9090
+            periodSeconds: 10
+            failureThreshold: 30
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
@@ -52,6 +69,10 @@ spec:
               value: X-Demo-Id
             - name: OTEL_TRACES_SAMPLER
               value: "always_on"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
 ---
 apiVersion: v1
 kind: Service

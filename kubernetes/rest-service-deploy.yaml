@@ -21,6 +21,28 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+
+          livenessProbe:
+            httpGet:
+              path: /test
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /test
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          
+          startupProbe:
+            httpGet:
+              path: /test
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+
           env:          
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"

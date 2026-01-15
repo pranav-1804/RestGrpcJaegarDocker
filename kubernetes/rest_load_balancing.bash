@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Number of requests to send
-REQUESTS=${1:-20}
+REQUESTS=${1:-100}
 
 # Read URL from file (created by minikube service --url)
 URL_FILE="rest-service-url.txt"
@@ -44,4 +44,4 @@ for POD in "${!COUNTS[@]}"; do
 done
 
 echo
-echo "🎉 Kubernetes Service is successfully load balancing across pods!"[web:189][web:188]
+echo "🎉 Kubernetes Service is successfully load balancing across pods!"

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Number of requests to send
+REQUESTS=${1:-100}
+
+# Read URL from file (created by minikube service --url)
+URL_FILE="grpc-service-url.txt"
+
+if [[ ! -f "${URL_FILE}" ]]; then
+  echo "❌ ${URL_FILE} not found!"
+  echo "📝 Run this first:"
+  echo "   minikube service grpc-service --url | head -n1 > ${URL_FILE}"
+  echo "   cat ${URL_FILE}"
+  exit 1
+fi
+
+SERVICE_URL=$(cat "${URL_FILE}" | head -n1 | xargs)
+SERVICE_HOST=$(echo "${SERVICE_URL}" | sed -E 's|https?://||' | cut -d'/' -f1)
+echo "✅ Using HOST from ${SERVICE_URL}: ${SERVICE_HOST}"
+echo "📊 Sending ${REQUESTS} requests to demonstrate Kubernetes Service load balancing..."
+echo
+
+declare -A COUNTS
+
+for i in $(seq 1 "${REQUESTS}"); do
+  # Use grpcurl to call pod-id method (assumes your gRPC service has /pod-id endpoint)
+  RESP=$(grpcurl -plaintext -max-time 5 \
+    -d '{}' \
+    "${SERVICE_HOST}" \
+    com.example.grpc.DebugService/GetDebugInfo)
+  
+  echo "Request ${i}: ${RESP} [$(date +'%H:%M:%S.%3N')]"
+  
+  POD_ID="${RESP}"
+  COUNTS["${POD_ID}"]=$(( ${COUNTS["${POD_ID}"]:-0} + 1 ))
+  
+  sleep 1
+done
+
+echo
+echo "==== 📈 Load Balancing Summary ===="
+echo "Total requests: ${REQUESTS}"
+echo
+
+for POD in "${!COUNTS[@]}"; do
+  COUNT=${COUNTS[$POD]}
+  PERCENT=$(awk "BEGIN {printf \"%.1f\", (${COUNT}/${REQUESTS})*100}")
+  echo "  ${POD}: ${COUNT} requests (${PERCENT}%)"
+done
+
+echo
+echo "🎉 Kubernetes Service is successfully load balancing across pods!"

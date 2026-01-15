@@ -175,7 +175,7 @@ curl -X PUT (minikube rest-service url)/orders/{id} \
 
 ---
 
-## 7. Load Balancing Demo
+## 7. Load Balancing Demo for REST-SERVICE
 
 Demonstrate Kubernetes Service load balancing across multiple REST service pods.
 
@@ -186,6 +186,7 @@ Scale your REST deployment to multiple replicas:
 ### 1. Generate Service URL (Run Once)
 
 minikube service rest-service --url | head -n1 > rest-service-url.txt
+Execute the above command in directory where bash files to demonstrate load balancing features are present.
 
 On a new terminal -> cat rest-service-url.txt
 
@@ -194,12 +195,12 @@ http://192.168.49.2:31080
 
 ### 3. Run the load_balancing.bash file
 
-./load_balancing.bash
+./rest_load_balancing.bash
 
 ### Expected Output
 
 Using URL: http://192.168.49.2:31080
-Sending 20 requests...
+Sending 100 requests...
 Request 1: rest-service-7ff9c76544-vrmnw
 Request 2: rest-service-7ff9c76544-abcdx
 Request 3: rest-service-7ff9c76544-xyz12
@@ -220,7 +221,7 @@ kubectl get pods -l app=rest-service -o wide
 
 ### 2. Execute the bash file and then open a new terminal to Kill a Pod
 
-./load_balancing.bash
+./rest_load_balancing.bash
 
 kubectl delete pod {podname} --force --grace-period=0
 
@@ -231,7 +232,67 @@ kubectl get pods -l app=rest-service -w
 
 Look at the bash script logs, you will see traffic being directed to a new pod now.
 
-## 9. Cleanup
+
+## 9.Load Balancing Demo for GRPC-SERVICE
+
+Demonstrate Kubernetes Service load balancing across multiple GRPC service pods.
+
+### Prerequisites
+
+Scale your GRPC deployment to multiple replicas:
+
+### 1. Generate Service URL (Run Once)
+
+minikube service grpc-service --url | head -n1 > grpc-service-url.txt
+Execute the above command in directory where bash files to demonstrate load balancing features are present.
+
+On a new terminal -> cat grpc-service-url.txt
+
+**Output example:**
+http://192.168.49.2:31080
+
+### 3. Run the load_balancing.bash file
+
+./grpc_load_balancing.bash
+
+### Expected Output
+
+Using URL: http://192.168.49.2:31080
+Sending 100 requests...
+Request 1: grpc-service-7ff9c76544-vrmnw
+Request 2: grpc-service-7ff9c76544-abcdx
+Request 3: grpc-service-7ff9c76544-xyz12
+
+==== Load Balancing Summary ====
+grpc-service-7ff9c76544-vrmnw: 17 requests (34.0%)
+grpc-service-7ff9c76544-abcdx: 17 requests (34.0%)
+grpc-service-7ff9c76544-xyz12: 16 requests (32.0%)
+Kubernetes Service load balancing demonstrated!
+
+
+## 10. Kubernetes Self-Healing Demo
+
+Demonstrate Kubernetes **self-healing** - when a pod dies, Deployment automatically recreates it.
+
+### 1. Check Current Pods
+
+kubectl get pods -l app=grpc-service -o wide
+
+### 2. Execute the bash file and then open a new terminal to Kill a Pod
+
+./grpc_load_balancing.bash
+
+kubectl delete pod {podname} --force --grace-period=0
+
+### 3. Watch Self-Healing in Action
+
+Watch pods being recreated
+kubectl get pods -l app=grpc-service -w
+
+Look at the bash script logs, you will see traffic being directed to a new pod now.
+
+
+## 11. Cleanup
 
 If you need to use the services again in future just do 
 
